@@ -433,6 +433,9 @@
 
 <div id="admin-toast"></div>
 
+<!-- data.js ÖNCE yüklenmeli — module script asenkron çalıştığı için -->
+<script src="data.js"></script>
+
 <!-- ── Firebase ── -->
 <script type="module">
 import { initializeApp }          from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
@@ -455,9 +458,9 @@ const auth = getAuth(app);
 const db   = getFirestore(app);
 const gp   = new GoogleAuthProvider();
 
-// ── Yetkili e-postalar — SADECE bu liste admin paneline girebilir ──
+// ── Yetkili e-postalar — buraya kendi Google hesabını ekle ──
 const ALLOWED_EMAILS = [
-    "akbastalha9@gmail.com",
+     "akbastalha9@gmail.com",  
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -777,15 +780,30 @@ onAuthStateChanged(auth, async user => {
     document.getElementById('loading').style.display  = 'flex';
     document.getElementById('questions-list').style.display = 'none';
 
-    // appData'yı bekle
-    const _waitForAppData = () => new Promise(resolve => {
-        if (window.appData) { resolve(); return; }
+    // appData'yı bekle — data.js zaten önce yüklendiği için
+    // genelde anında hazır olur, yine de kısa bir retry döngüsü ekle
+    const _waitForAppData = () => new Promise((resolve, reject) => {
+        if (window.appData && window.appData.quizData) { resolve(); return; }
+        let tries = 0;
         const interval = setInterval(() => {
-            if (window.appData) { clearInterval(interval); resolve(); }
+            tries++;
+            if (window.appData && window.appData.quizData) {
+                clearInterval(interval);
+                resolve();
+            } else if (tries > 100) { // 10 saniye
+                clearInterval(interval);
+                console.error('[Admin] appData yüklenemedi! data.js dosyasını kontrol edin.');
+                reject(new Error('appData yüklenemedi'));
+            }
         }, 100);
-        setTimeout(() => { clearInterval(interval); resolve(); }, 5000);
     });
-    await _waitForAppData();
+    try {
+        await _waitForAppData();
+    } catch(e) {
+        document.getElementById('loading').innerHTML =
+            '<div style="color:#e74c3c">⚠️ data.js yüklenemedi. Sayfayı yenileyin.</div>';
+        return;
+    }
 
     // Soruları topla
     _allQuestions = _collectVisualQuestions();
@@ -805,9 +823,6 @@ onAuthStateChanged(auth, async user => {
     _renderList();
 });
 </script>
-
-<!-- data.js'yi yükle (appData için) -->
-<script src="data.js"></script>
 
 </body>
 </html>
