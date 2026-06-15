@@ -3610,6 +3610,16 @@ function showHistoryQuestion(idx) {
     document.getElementById('modal-overlay').style.display = 'block';
     document.getElementById('question-modal').style.display = 'block';
 
+    // ── GÖRSEL: önceki soruya dönünce görseli yeniden inject et ──
+    // openQuestion wrap'ı bypass edildiğinden _injectVisualFn manuel çağrılır.
+    if (typeof window._injectVisualFn === 'function') {
+        window._injectVisualFn(record.item);
+    }
+    // Görsel Firestore'dan yükleniyor idiyse (url yok, b64 cache/Firestore'da) onu da çek
+    if (typeof window._loadFirestoreVisualFn === 'function') {
+        window._loadFirestoreVisualFn(record.item);
+    }
+
     const topicLabel = document.getElementById('topic-label');
     if (topicLabel) {
         if (record.item.topicTitle) {
@@ -8988,6 +8998,10 @@ window.showAnswer = function() {
         _removeVisual();
         if (_origCloseModal) _origCloseModal.call(this);
     };
+    // ── Global erişim noktası — showHistoryQuestion ve Firestore loader kullanır ──
+    window._injectVisualFn = _injectVisual;
+    window._removeVisualFn = _removeVisual;
+
 
     // ── CSS ───────────────────────────────────────────────────
     const old = document.getElementById('visual-question-styles');
@@ -9156,50 +9170,55 @@ window.showAnswer = function() {
     // Görsel alanı inject edildikten sonra async olarak URL güncelle
     const VISUAL_ID = 'q-visual-area';
 
+    // Firestore'dan b64 geldikten sonra görsel alanını güncelle
+    // (openQuestion ve showHistoryQuestion her ikisi tarafından kullanılır)
+    function _applyB64ToVisualArea(b64, item) {
+        if (!b64) return;
+        const visualArea = document.getElementById(VISUAL_ID);
+        if (!visualArea) return;
+
+        const badge   = visualArea.querySelector('.qv-desc-badge');
+        const imgWrap = visualArea.querySelector('.qv-img-wrap');
+
+        if (imgWrap) {
+            const img = imgWrap.querySelector('img');
+            if (img) img.src = b64;
+        } else if (badge) {
+            const wrap = document.createElement('div');
+            wrap.className = 'qv-img-wrap';
+            const img = document.createElement('img');
+            img.className = 'qv-img';
+            img.src = b64;
+            img.alt = item.visual.desc || 'Soru görseli';
+            wrap.appendChild(img);
+            visualArea.innerHTML = '';
+            visualArea.appendChild(wrap);
+        } else {
+            const wrap = document.createElement('div');
+            wrap.className = 'qv-img-wrap';
+            const img = document.createElement('img');
+            img.className = 'qv-img';
+            img.src = b64;
+            img.alt = item.visual.desc || 'Soru görseli';
+            wrap.appendChild(img);
+            visualArea.appendChild(wrap);
+        }
+    }
+
+    // Görsel çek + uygula — dışarıdan (showHistoryQuestion) da çağrılabilir
+    function _loadAndApplyFirestoreVisual(item) {
+        if (!item || !item.visual || item.visual.url) return;
+        _resolveVisual(item.id).then(b64 => _applyB64ToVisualArea(b64, item));
+    }
+
+    // Global erişim: showHistoryQuestion tarafından kullanılır
+    window._loadFirestoreVisualFn = _loadAndApplyFirestoreVisual;
+
     const _origOpenQuestion = window.openQuestion;
     window.openQuestion = function(item, markerObject) {
         _origOpenQuestion.call(this, item, markerObject);
-
         // Görsel gerektiren soru ve URL boşsa → Firestore'dan çek
-        if (item && item.visual && !item.visual.url) {
-            _resolveVisual(item.id).then(b64 => {
-                if (!b64) return;
-
-                // Modal hâlâ açık mı kontrol et
-                const visualArea = document.getElementById(VISUAL_ID);
-                if (!visualArea) return;
-
-                const badge = visualArea.querySelector('.qv-desc-badge');
-                const imgWrap = visualArea.querySelector('.qv-img-wrap');
-
-                if (imgWrap) {
-                    // Zaten img wrap varsa src güncelle
-                    const img = imgWrap.querySelector('img');
-                    if (img) img.src = b64;
-                } else if (badge) {
-                    // Badge varsa img wrap'a çevir
-                    const wrap = document.createElement('div');
-                    wrap.className = 'qv-img-wrap';
-                    const img = document.createElement('img');
-                    img.className = 'qv-img';
-                    img.src = b64;
-                    img.alt = item.visual.desc || 'Soru görseli';
-                    wrap.appendChild(img);
-                    visualArea.innerHTML = '';
-                    visualArea.appendChild(wrap);
-                } else {
-                    // Hiçbiri yoksa yeni ekle
-                    const wrap = document.createElement('div');
-                    wrap.className = 'qv-img-wrap';
-                    const img = document.createElement('img');
-                    img.className = 'qv-img';
-                    img.src = b64;
-                    img.alt = item.visual.desc || 'Soru görseli';
-                    wrap.appendChild(img);
-                    visualArea.appendChild(wrap);
-                }
-            });
-        }
+        _loadAndApplyFirestoreVisual(item);
     };
 
     // ── Cache temizleme (ayarlar menüsü için) ────────────────
