@@ -7619,3 +7619,5 @@ const appData = {
     }
 
 };
+// Admin paneli ve module script'lerin erişebilmesi için global'e aktar
+window.appData = appData;
