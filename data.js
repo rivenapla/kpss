@@ -5951,7 +5951,7 @@ const appData = {
                 id: "ck_t1_04",
                 q: "I. Uluslararası yolları birbirine bağlayan köprülere sahip olması\nII. Uluslararası enerji koridorunun merkezi konumunda olması\nIII. Zengin yer altı kaynaklarına sahip olması\n\nYukarıdakilerden hangileri Türkiye'nin jeopolitik konumunun doğal unsurları arasında yer alır?",
                 options: ["Yalnız I", "Yalnız II", "Yalnız III", "I ve III", "II ve III"],
-                a: ["I ve III"],
+                a: ["III"],
                 topicTitle: "Coğrafi Konum — Test 1"
             },
             {
@@ -5964,7 +5964,7 @@ const appData = {
                     "Kış aylarında cephe yağışlarının etkili olması",
                     "Dağların doğu - batı yönünde uzanması"
                 ],
-                a: ["Zengin bor minerali yataklarına sahip olması"],
+                a: ["Kış aylarında cephe yağışlarının etkili olması"],
                 topicTitle: "Coğrafi Konum — Test 1"
             },
             {
@@ -5979,7 +5979,7 @@ const appData = {
                 q: "Haritada gösterilen il merkezlerinin hangi ikisi arasında yerel saat farkı daha azdır?",
                 visual: { type: "image", url: null, desc: "Türkiye haritasında İzmit, Sinop, Balıkesir, Trabzon, Mersin işaretli" },
                 options: ["İzmit - Balıkesir", "Sinop - Trabzon", "Trabzon - Balıkesir", "Sinop - Mersin", "İzmit - Mersin"],
-                a: ["Sinop - Trabzon"],
+                a: ["Sinop - Mersin"],
                 topicTitle: "Coğrafi Konum — Test 1"
             },
             {
@@ -5992,7 +5992,7 @@ const appData = {
                     "Kıyılarımız boyunca güneyden kuzeye doğru sıcaklığın azalması",
                     "Güneş ışınlarının düz zeminlere dik açıyla gelmemesi"
                 ],
-                a: ["Aynı anda tek ortak saat kullanılması"],
+                a: ["Aynı anda farklı iklim özelliklerinin görülmesi"],
                 topicTitle: "Coğrafi Konum — Test 1"
             },
             {
@@ -6045,7 +6045,7 @@ const appData = {
                 id: "ck_t2_01",
                 q: "Bulunduğu enlemlerden dolayı Türkiye'de kuzeye gidildikçe güneş ışınlarının düşme açısı küçülür, ışınların atmosferde aldığı yol uzar.\n\nBuna göre;\nI. Çizgisel hız azalır.\nII. Aydınlanma süresi değişir.\nIII. Güneş ışığının tutulma oranı artar.\nIV. Sıcaklık ortalaması azalır.\n\nGibi durumlardan hangileri yukarıda verilen açıklamaya bağlı ortaya çıkar?",
                 options: ["I ve II", "II ve III", "III ve IV", "I, II ve III", "II, III ve IV"],
-                a: ["II, III ve IV"],
+                a: ["III ve IV"],
                 topicTitle: "Coğrafi Konum — Test 2"
             },
             {
@@ -6089,7 +6089,7 @@ const appData = {
                     "Güneş ışınları düz zeminlere dik açıyla gelmez.",
                     "Kış döneminde cephe yağışları etkilidir."
                 ],
-                a: ["Güneye doğru gidildikçe alacakaranlık süresi azalır."],
+                a: ["Kuzeye gidildikçe güneş ışığının tutulma oranı azalır."],
                 topicTitle: "Coğrafi Konum — Test 2"
             },
             {
@@ -6111,7 +6111,7 @@ const appData = {
                     "II merkezinde güneş ışığının atmosferde aldığı yol IV merkezinden daha uzundur.",
                     "IV merkezinde güneşin ufuktaki hızı daha fazladır."
                 ],
-                a: ["III merkezinde yerel saat ile ortak saat arasında fark en azdır."],
+                a: ["III merkezinde gece - gündüz süre farkı tüm yıl boyunca IV merkezinden fazladır."],
                 topicTitle: "Coğrafi Konum — Test 2"
             },
 
@@ -6136,7 +6136,7 @@ const appData = {
                 id: "ck_t3_02",
                 q: "I. Başlangıç meridyenine uzaklıkları eşittir.\nII. Ekinoks tarihlerinde Güneş'in doğuş ve batış saatleri aynıdır.\nIII. Güneş öğle vakti tam tepe noktasındadır.\nIV. Gün içinde gölge boyunun en kısa olduğu an aynıdır.\nV. Başlangıç meridyeninde yer alan bir merkezle aralarındaki zaman farkı eşittir.\n\nYukarıdaki bilgilere göre Türkiye'de aynı meridyen üzerinde yer alan merkezlerle ilgili verilen bilgilerden hangileri yanlıştır?",
                 options: ["Yalnız I", "Yalnız II", "Yalnız IV", "III ve V", "II ve IV"],
-                a: ["Yalnız II"],
+                a: ["Yalnız I"],
                 topicTitle: "Coğrafi Konum — Test 3"
             },
             {
@@ -6150,7 +6150,7 @@ const appData = {
                     "C ve D merkezlerinde Güneş yıl boyu aynı anda doğmaktadır.",
                     "D merkezinde yerel saat C merkezine göre ileridir."
                 ],
-                a: ["C ve D merkezlerinde yerel saat aynıdır."],
+                a: ["C merkezinde yerel saat D merkezine göre ileridir."],
                 topicTitle: "Coğrafi Konum — Test 3"
             },
             {
@@ -6176,7 +6176,7 @@ const appData = {
                     "Y merkezinde alacakaranlık süresi daha uzundur.",
                     "X merkezinde gece - gündüz süre farkı değişimi daha azdır."
                 ],
-                a: ["Y merkezinde alacakaranlık süresi daha uzundur."],
+                a: ["Y merkezinde bu tarihte Güneş daha erken batar."],
                 topicTitle: "Coğrafi Konum — Test 3"
             },
             {
@@ -6190,7 +6190,7 @@ const appData = {
                     "21 Eylül'de Tokat'ta yaşanan gece süresi Kahramanmaraş'ta yaşanan gece süresinden kısadır.",
                     "Antalya'da 23 Mart tarihinde yaşanan gece süresi Ardahan'da yaşanan gece süresine göre daha kısadır."
                 ],
-                a: ["21 Eylül'de Tokat'ta yaşanan gece süresi Kahramanmaraş'ta yaşanan gece süresinden kısadır."],
+                a: ["Antalya'da 23 Mart tarihinde yaşanan gece süresi Ardahan'da yaşanan gece süresine göre daha kısadır."],
                 topicTitle: "Coğrafi Konum — Test 3"
             },
             {
@@ -6203,7 +6203,7 @@ const appData = {
                     "6 Eylül - 21 Eylül",
                     "22 Aralık - 5 Ocak"
                 ],
-                a: ["19 Haziran - 3 Temmuz"],
+                a: ["6 Eylül - 21 Eylül"],
                 topicTitle: "Coğrafi Konum — Test 3"
             },
             {
@@ -6231,7 +6231,7 @@ const appData = {
                     "C merkezine ulaşan gözlemci, karasallık şiddetinin X merkezindekine göre daha fazla olduğunu söylemiştir.",
                     "B merkezine ulaşan gözlemci bu merkezde 17 Mayıs tarihinde Güneş'in X merkezine göre daha geç battığını söylemiştir."
                 ],
-                a: ["D merkezine ulaşan gözlemci, bu merkezde alacakaranlık süresinin X merkezi ile aynı olduğunu söylemiştir."],
+                a: ["E merkezine ulaşan gözlemci, bu merkezde güneş ışınlarının tutulma oranının X merkezine göre daha fazla olduğunu söylemiştir."],
                 topicTitle: "Coğrafi Konum — Test 3"
             },
             {
@@ -6245,7 +6245,7 @@ const appData = {
                     "IV. bölgede, Güneş'in bir merkezin önünden geçme hızı I. bölgeden fazladır.",
                     "II. bölgede Güneş'in batma saati, III. bölgeye göre ileridir."
                 ],
-                a: ["I. ve II. bölgelerde iki meridyen arası mesafe daha dardır."],
+                a: ["III. ve IV. bölgelerde 21 Aralıkta I. ve II. bölgeye göre gece süresi daha uzundur."],
                 topicTitle: "Coğrafi Konum — Test 3"
             },
             {
@@ -6258,7 +6258,7 @@ const appData = {
                     "Gölge boyunun kuzeye uzaması",
                     "Güneyden kuzeye gittikçe sıcaklık ortalamalarının azalması"
                 ],
-                a: ["Gölge boyunun kuzeye uzaması"],
+                a: ["İzmir çevresinde maki türlerinin varlığı"],
                 topicTitle: "Coğrafi Konum — Test 3"
             },
             {
@@ -6318,7 +6318,7 @@ const appData = {
                 id: "ck_t4_05",
                 q: "Aşağıdakilerin hangisinde, Türkiye'nin aynı denize kıyısı olan iki komşusu birlikte verilmiştir?",
                 options: ["Gürcistan ve Bulgaristan", "Bulgaristan ve Suriye", "Irak ve Gürcistan", "Irak ve Suriye", "Bulgaristan ve İran"],
-                a: ["Bulgaristan ve Suriye"],
+                a: ["Gürcistan ve Bulgaristan"],
                 topicTitle: "Coğrafi Konum — Test 4 (Çıkmış)"
             },
             {
@@ -6413,7 +6413,7 @@ const appData = {
                     "Bulundukları coğrafi bölüm aynıdır.",
                     "Yükseltileri Türkiye ortalamasının altındadır."
                 ],
-                a: ["Bulundukları coğrafi bölüm aynıdır."],
+                a: ["Yerel saatleri aynıdır."],
                 topicTitle: "Coğrafi Konum — Test 4 (Çıkmış)"
             },
             {
