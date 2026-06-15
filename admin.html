@@ -457,37 +457,10 @@ const gp   = new GoogleAuthProvider();
 
 // ── Yetkili e-postalar — buraya kendi Google hesabını ekle ──
 const ALLOWED_EMAILS = [
-     "akbastalha9@gmail.com",  
+    // "senin@gmail.com",   ← kendi e-postanı ekle
 ];
 
-// ─────────────────────────────────────────────────────────────
-// Görsel gerektiren tüm soruları data.js'den topla
-// ─────────────────────────────────────────────────────────────
-function _collectVisualQuestions() {
-    // data.js'deki appData'yı kullan
-    const allQuestions = [];
-    const data = window.appData;
-    if (!data || !data.quizData) return allQuestions;
-
-    function _walk(obj, topicTitle) {
-        if (Array.isArray(obj)) {
-            obj.forEach(q => {
-                if (q && q.visual) {
-                    allQuestions.push({
-                        id:         q.id,
-                        q:          q.q,
-                        topicTitle: q.topicTitle || topicTitle || '',
-                        visual:     q.visual,
-                    });
-                }
-            });
-        } else if (obj && typeof obj === 'object') {
-            Object.entries(obj).forEach(([key, val]) => _walk(val, key));
-        }
-    }
-    _walk(data.quizData, '');
-    return allQuestions;
-}
+// _collectVisualQuestions module dışında tanımlandı (aşağıda)
 
 // ─────────────────────────────────────────────────────────────
 // Firestore — görsel kaydet / sil / oku
@@ -779,16 +752,19 @@ onAuthStateChanged(auth, async user => {
 
     // appData'yı bekle
     const _waitForAppData = () => new Promise(resolve => {
-        if (window.appData) { resolve(); return; }
+        // _collectVisualQuestions hazır olunca appData da hazır demektir
+        const _check = () => typeof window._collectVisualQuestions === 'function'
+                          && typeof appData !== 'undefined';
+        if (_check()) { resolve(); return; }
         const interval = setInterval(() => {
-            if (window.appData) { clearInterval(interval); resolve(); }
+            if (_check()) { clearInterval(interval); resolve(); }
         }, 100);
         setTimeout(() => { clearInterval(interval); resolve(); }, 5000);
     });
     await _waitForAppData();
 
-    // Soruları topla
-    _allQuestions = _collectVisualQuestions();
+    // Soruları topla (global fonksiyon — module dışında tanımlı)
+    _allQuestions = window._collectVisualQuestions();
 
     // Mevcut görselleri Firestore'dan çek
     try {
@@ -806,8 +782,41 @@ onAuthStateChanged(auth, async user => {
 });
 </script>
 
-<!-- data.js'yi yükle (appData için) -->
+<!-- data.js'yi yükle (appData için) — module scope dışında, global erişim için -->
 <script src="data.js"></script>
+
+<!-- Görsel soru toplayıcı — data.js yüklendikten sonra global scope'ta çalışır -->
+<script>
+function _collectVisualQuestions() {
+    const allQuestions = [];
+    // data.js'deki appData const tanımlı, aynı scope'ta erişilebilir
+    if (typeof appData === 'undefined' || !appData.quizData) {
+        console.warn('[Admin] appData bulunamadı');
+        return allQuestions;
+    }
+    function _walk(obj, topicTitle) {
+        if (Array.isArray(obj)) {
+            obj.forEach(function(q) {
+                if (q && q.visual) {
+                    allQuestions.push({
+                        id:         q.id,
+                        q:          q.q,
+                        topicTitle: q.topicTitle || topicTitle || '',
+                        visual:     q.visual,
+                    });
+                }
+            });
+        } else if (obj && typeof obj === 'object') {
+            Object.entries(obj).forEach(function([key, val]) { _walk(val, key); });
+        }
+    }
+    _walk(appData.quizData, '');
+    console.log('[Admin] Toplam görsel soru:', allQuestions.length);
+    return allQuestions;
+}
+// module scope'tan erişebilmek için window'a bağla
+window._collectVisualQuestions = _collectVisualQuestions;
+</script>
 
 </body>
 </html>
