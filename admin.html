@@ -461,6 +461,7 @@ const gp   = new GoogleAuthProvider();
 // ── Yetkili e-postalar — buraya kendi Google hesabını ekle ──
 const ALLOWED_EMAILS = [
      "akbastalha9@gmail.com",  
+     "rivenapla@gmail.com"
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -780,26 +781,20 @@ onAuthStateChanged(auth, async user => {
     document.getElementById('loading').style.display  = 'flex';
     document.getElementById('questions-list').style.display = 'none';
 
-    // data.js'yi dinamik yükle — onload garantili bekler
+    // data.js zaten <script src="data.js"> ile yüklendi, hazır olana kadar bekle
     const _waitForAppData = () => new Promise((resolve, reject) => {
-        // Zaten yüklüyse direkt devam et
         if (window.appData && window.appData.quizData) { resolve(); return; }
-
-        // Dinamik script tag ile yükle, onload'da resolve et
-        const existing = document.querySelector('script[src="data.js"]');
-        if (existing) existing.remove(); // varsa temizle, yeniden yükle
-
-        const s = document.createElement('script');
-        s.src = 'data.js';
-        s.onload = () => {
+        let tries = 0;
+        const interval = setInterval(() => {
+            tries++;
             if (window.appData && window.appData.quizData) {
+                clearInterval(interval);
                 resolve();
-            } else {
-                reject(new Error('data.js yüklendi ama appData bulunamadı'));
+            } else if (tries > 300) { // 30 saniye
+                clearInterval(interval);
+                reject(new Error('data.js 30 saniyede yüklenemedi — sayfayı yenileyin'));
             }
-        };
-        s.onerror = () => reject(new Error('data.js dosyası bulunamadı'));
-        document.head.appendChild(s);
+        }, 100);
     });
     try {
         await _waitForAppData();
