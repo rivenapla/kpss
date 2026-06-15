@@ -461,7 +461,6 @@ const gp   = new GoogleAuthProvider();
 // ── Yetkili e-postalar — buraya kendi Google hesabını ekle ──
 const ALLOWED_EMAILS = [
      "akbastalha9@gmail.com",  
-     "rivenapla@gmail.com"
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -781,28 +780,33 @@ onAuthStateChanged(auth, async user => {
     document.getElementById('loading').style.display  = 'flex';
     document.getElementById('questions-list').style.display = 'none';
 
-    // appData'yı bekle — data.js zaten önce yüklendiği için
-    // genelde anında hazır olur, yine de kısa bir retry döngüsü ekle
+    // data.js'yi dinamik yükle — onload garantili bekler
     const _waitForAppData = () => new Promise((resolve, reject) => {
+        // Zaten yüklüyse direkt devam et
         if (window.appData && window.appData.quizData) { resolve(); return; }
-        let tries = 0;
-        const interval = setInterval(() => {
-            tries++;
+
+        // Dinamik script tag ile yükle, onload'da resolve et
+        const existing = document.querySelector('script[src="data.js"]');
+        if (existing) existing.remove(); // varsa temizle, yeniden yükle
+
+        const s = document.createElement('script');
+        s.src = 'data.js';
+        s.onload = () => {
             if (window.appData && window.appData.quizData) {
-                clearInterval(interval);
                 resolve();
-            } else if (tries > 100) { // 10 saniye
-                clearInterval(interval);
-                console.error('[Admin] appData yüklenemedi! data.js dosyasını kontrol edin.');
-                reject(new Error('appData yüklenemedi'));
+            } else {
+                reject(new Error('data.js yüklendi ama appData bulunamadı'));
             }
-        }, 100);
+        };
+        s.onerror = () => reject(new Error('data.js dosyası bulunamadı'));
+        document.head.appendChild(s);
     });
     try {
         await _waitForAppData();
     } catch(e) {
+        console.error('[Admin]', e.message);
         document.getElementById('loading').innerHTML =
-            '<div style="color:#e74c3c">⚠️ data.js yüklenemedi. Sayfayı yenileyin.</div>';
+            '<div style="color:#e74c3c;padding:20px;">⚠️ ' + e.message + '<br><br><button onclick="location.reload()" style="margin-top:10px;padding:8px 16px;cursor:pointer;">Yenile</button></div>';
         return;
     }
 
