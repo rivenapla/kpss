@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KPSS Atlas — Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:      #0d0d0f;
+            --panel:   #141418;
+            --panel-2: #1a1a1f;
+            --panel-3: #202026;
+            --line:    rgba(255,255,255,0.07);
+            --line-2:  rgba(255,255,255,0.11);
+            --t-100:   #f4f3f0;
+            --t-200:   #c8c6c0;
+            --t-400:   #7a7872;
+            --accent:  #6c6ef5;
+            --green:   #2ecc71;
+            --green-bg:rgba(46,204,113,0.12);
+            --red:     #e74c3c;
+            --red-bg:  rgba(231,76,60,0.12);
+            --gold:    #c9974a;
+            --r-md:    10px;
+            --r-lg:    14px;
+            --r-xl:    18px;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--t-100);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100svh;
+        }
+
+        /* ── Auth Ekranı ── */
+        #auth-screen {
+            min-height: 100svh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+            padding: 24px;
+        }
+        .auth-logo {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: var(--t-100);
+        }
+        .auth-logo em { color: var(--accent); font-style: normal; }
+        .auth-sub { font-size: 0.85rem; color: var(--t-400); margin-top: -12px; }
+        .auth-card {
+            background: var(--panel);
+            border: 1px solid var(--line-2);
+            border-radius: var(--r-xl);
+            padding: 28px 32px;
+            width: 100%;
+            max-width: 380px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .auth-title { font-size: 1rem; font-weight: 600; color: var(--t-100); }
+        .auth-desc  { font-size: 0.78rem; color: var(--t-400); margin-top: -6px; }
+        .btn-google {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 11px 20px;
+            background: var(--panel-3);
+            border: 1px solid var(--line-2);
+            border-radius: var(--r-md);
+            color: var(--t-100);
+            font-size: 0.88rem;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .btn-google:hover { background: var(--panel-2); border-color: var(--line-2); }
+        .auth-error {
+            font-size: 0.75rem;
+            color: var(--red);
+            background: var(--red-bg);
+            border: 1px solid var(--red);
+            border-radius: var(--r-md);
+            padding: 8px 12px;
+            display: none;
+        }
+
+        /* ── Ana Uygulama ── */
+        #app { display: none; }
+
+        .topbar {
+            background: var(--panel);
+            border-bottom: 1px solid var(--line);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .topbar-brand { font-size: 1rem; font-weight: 700; color: var(--t-100); }
+        .topbar-brand span { color: var(--accent); }
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+            color: var(--t-400);
+        }
+        .btn-sm {
+            padding: 6px 14px;
+            border-radius: var(--r-md);
+            background: var(--panel-3);
+            border: 1px solid var(--line-2);
+            color: var(--t-200);
+            font-size: 0.75rem;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-sm:hover { background: var(--panel-2); color: var(--t-100); }
+
+        .main { padding: 28px 24px; max-width: 900px; margin: 0 auto; }
+
+        /* ── Özet Stats ── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+        .stat-card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--r-lg);
+            padding: 16px 18px;
+        }
+        .stat-num  { font-size: 1.8rem; font-weight: 700; color: var(--t-100); line-height: 1; }
+        .stat-label{ font-size: 0.72rem; color: var(--t-400); margin-top: 4px; letter-spacing: 0.04em; text-transform: uppercase; }
+
+        /* ── Filtre ── */
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 7px 16px;
+            border-radius: 99px;
+            background: var(--panel-2);
+            border: 1px solid var(--line-2);
+            color: var(--t-400);
+            font-size: 0.78rem;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .filter-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+        .filter-btn:hover:not(.active) { color: var(--t-100); border-color: var(--line-2); }
+
+        /* ── Soru Kartları ── */
+        .questions-list { display: flex; flex-direction: column; gap: 10px; }
+
+        .q-card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--r-lg);
+            overflow: hidden;
+            transition: border-color 0.15s;
+        }
+        .q-card:hover { border-color: var(--line-2); }
+        .q-card.has-visual { border-color: rgba(46,204,113,0.3); }
+        .q-card.has-visual:hover { border-color: var(--green); }
+
+        .q-card-header {
+            padding: 14px 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            cursor: pointer;
+        }
+        .q-num {
+            min-width: 32px; height: 32px;
+            border-radius: 8px;
+            background: var(--panel-3);
+            border: 1px solid var(--line-2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.72rem; font-weight: 700; color: var(--t-400);
+            flex-shrink: 0;
+        }
+        .q-content { flex: 1; min-width: 0; }
+        .q-topic { font-size: 0.68rem; color: var(--accent); font-weight: 600; letter-spacing: 0.04em; margin-bottom: 3px; }
+        .q-text {
+            font-size: 0.82rem;
+            color: var(--t-200);
+            line-height: 1.45;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .q-badge {
+            flex-shrink: 0;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-size: 0.66rem;
+            font-weight: 700;
+        }
+        .q-badge.done {
+            background: var(--green-bg);
+            color: var(--green);
+            border: 1px solid rgba(46,204,113,0.3);
+        }
+        .q-badge.pending {
+            background: rgba(201,151,74,0.12);
+            color: var(--gold);
+            border: 1px solid rgba(201,151,74,0.3);
+        }
+
+        /* ── Yükleme Alanı ── */
+        .q-upload-area {
+            padding: 0 16px 16px 60px;
+            display: none;
+        }
+        .q-upload-area.open { display: block; }
+
+        .q-desc-hint {
+            font-size: 0.73rem;
+            color: var(--t-400);
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            background: var(--panel-2);
+            border-radius: var(--r-md);
+            border-left: 3px solid var(--accent);
+            font-style: italic;
+        }
+
+        .preview-wrap {
+            margin-bottom: 10px;
+            border-radius: var(--r-lg);
+            overflow: hidden;
+            border: 1px solid var(--line-2);
+            background: var(--panel-2);
+            max-height: 200px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .preview-wrap.show { display: flex; }
+        .preview-wrap img {
+            max-width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--line-2);
+            border-radius: var(--r-lg);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.15s;
+            color: var(--t-400);
+            font-size: 0.78rem;
+        }
+        .drop-zone:hover, .drop-zone.drag-over {
+            border-color: var(--accent);
+            background: rgba(108,110,245,0.06);
+            color: var(--t-200);
+        }
+        .drop-zone input[type="file"] { display: none; }
+        .drop-icon { font-size: 1.6rem; margin-bottom: 6px; }
+
+        .upload-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .btn-upload {
+            flex: 1;
+            padding: 9px 16px;
+            border-radius: var(--r-md);
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            font-size: 0.82rem;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: opacity 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .btn-upload:disabled { opacity: 0.45; cursor: default; }
+        .btn-upload:hover:not(:disabled) { opacity: 0.88; }
+
+        .btn-remove {
+            padding: 9px 14px;
+            border-radius: var(--r-md);
+            background: var(--red-bg);
+            border: 1px solid rgba(231,76,60,0.3);
+            color: var(--red);
+            font-size: 0.78rem;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: opacity 0.15s;
+            display: none;
+        }
+        .btn-remove:hover { opacity: 0.8; }
+
+        .upload-status {
+            margin-top: 8px;
+            font-size: 0.74rem;
+            min-height: 18px;
+        }
+        .status-ok      { color: var(--green); }
+        .status-err     { color: var(--red); }
+        .status-loading { color: var(--t-400); }
+
+        /* ── Loading ── */
+        #loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+            color: var(--t-400);
+            font-size: 0.85rem;
+            gap: 10px;
+        }
+        .spinner {
+            width: 20px; height: 20px;
+            border: 2px solid var(--line-2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Toast ── */
+        #admin-toast {
+            position: fixed;
+            bottom: 24px; left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--panel-3);
+            border: 1px solid var(--line-2);
+            border-radius: 99px;
+            padding: 10px 20px;
+            font-size: 0.82rem;
+            color: var(--t-100);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+            z-index: 9999;
+            white-space: nowrap;
+        }
+        #admin-toast.show { transform: translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+
+<!-- ── Auth Ekranı ── -->
+<div id="auth-screen">
+    <div class="auth-logo">KPSS<em>.</em></div>
+    <div class="auth-sub">Admin Paneli</div>
+    <div class="auth-card">
+        <div class="auth-title">Giriş Yap</div>
+        <div class="auth-desc">Sadece yetkili hesaplarla erişilebilir.</div>
+        <button class="btn-google" id="btn-google-login">
+            <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/></svg>
+            Google ile Giriş
+        </button>
+        <div class="auth-error" id="auth-error"></div>
+    </div>
+</div>
+
+<!-- ── Ana Uygulama ── -->
+<div id="app">
+    <div class="topbar">
+        <div class="topbar-brand">KPSS<span>.</span> Admin</div>
+        <div class="topbar-user">
+            <span id="user-name">—</span>
+            <button class="btn-sm" id="btn-logout">Çıkış</button>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="stats-row" id="stats-row">
+            <div class="stat-card">
+                <div class="stat-num" id="stat-total">—</div>
+                <div class="stat-label">Toplam Görsel Soru</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" id="stat-done" style="color:var(--green)">—</div>
+                <div class="stat-label">Görsel Yüklendi</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" id="stat-pending" style="color:var(--gold)">—</div>
+                <div class="stat-label">Bekliyor</div>
+            </div>
+        </div>
+
+        <div class="filter-row">
+            <button class="filter-btn active" data-filter="all">Tümü</button>
+            <button class="filter-btn" data-filter="pending">⏳ Bekliyor</button>
+            <button class="filter-btn" data-filter="done">✅ Yüklendi</button>
+        </div>
+
+        <div id="loading">
+            <div class="spinner"></div>
+            Sorular yükleniyor...
+        </div>
+
+        <div class="questions-list" id="questions-list" style="display:none;"></div>
+    </div>
+</div>
+
+<div id="admin-toast"></div>
+
+<!-- ── Firebase ── -->
+<script type="module">
+import { initializeApp }          from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+    from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs }
+    from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+const firebaseConfig = {
+    apiKey:            "AIzaSyB8vAXBIg1VNRKWFezzkpeA9F3dWvK0E5M",
+    authDomain:        "kpss-atlas.firebaseapp.com",
+    projectId:         "kpss-atlas",
+    storageBucket:     "kpss-atlas.firebasestorage.app",
+    messagingSenderId: "67077582975",
+    appId:             "1:67077582975:web:2ef63b57347b193f12cf4a"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+const gp   = new GoogleAuthProvider();
+
+// ── Yetkili e-postalar — buraya kendi Google hesabını ekle ──
+const ALLOWED_EMAILS = [
+     "akbastalha9@gmail.com",  
+];
+
+// ─────────────────────────────────────────────────────────────
+// Görsel gerektiren tüm soruları data.js'den topla
+// ─────────────────────────────────────────────────────────────
+function _collectVisualQuestions() {
+    // data.js'deki appData'yı kullan
+    const allQuestions = [];
+    const data = window.appData;
+    if (!data || !data.quizData) return allQuestions;
+
+    function _walk(obj, topicTitle) {
+        if (Array.isArray(obj)) {
+            obj.forEach(q => {
+                if (q && q.visual) {
+                    allQuestions.push({
+                        id:         q.id,
+                        q:          q.q,
+                        topicTitle: q.topicTitle || topicTitle || '',
+                        visual:     q.visual,
+                    });
+                }
+            });
+        } else if (obj && typeof obj === 'object') {
+            Object.entries(obj).forEach(([key, val]) => _walk(val, key));
+        }
+    }
+    _walk(data.quizData, '');
+    return allQuestions;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Firestore — görsel kaydet / sil / oku
+// Collection: question_visuals / {questionId} / { base64, uploadedAt, uploadedBy }
+// ─────────────────────────────────────────────────────────────
+async function _loadAllVisuals() {
+    const snap = await getDocs(collection(db, 'question_visuals'));
+    const map  = {};
+    snap.forEach(d => { map[d.id] = d.data(); });
+    return map;
+}
+
+async function _saveVisual(questionId, base64, userEmail) {
+    await setDoc(doc(db, 'question_visuals', questionId), {
+        base64,
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: userEmail,
+    });
+}
+
+async function _deleteVisual(questionId) {
+    await deleteDoc(doc(db, 'question_visuals', questionId));
+}
+
+// ─────────────────────────────────────────────────────────────
+// UI
+// ─────────────────────────────────────────────────────────────
+let _currentFilter  = 'all';
+let _visualsMap     = {};
+let _allQuestions   = [];
+let _currentUser    = null;
+
+function _toast(msg, duration = 2500) {
+    const el = document.getElementById('admin-toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), duration);
+}
+
+function _updateStats() {
+    const total   = _allQuestions.length;
+    const done    = _allQuestions.filter(q => _visualsMap[q.id]).length;
+    const pending = total - done;
+    document.getElementById('stat-total').textContent   = total;
+    document.getElementById('stat-done').textContent    = done;
+    document.getElementById('stat-pending').textContent = pending;
+}
+
+function _renderList() {
+    const list = document.getElementById('questions-list');
+    list.innerHTML = '';
+
+    const filtered = _allQuestions.filter(q => {
+        if (_currentFilter === 'done')    return !!_visualsMap[q.id];
+        if (_currentFilter === 'pending') return !_visualsMap[q.id];
+        return true;
+    });
+
+    if (filtered.length === 0) {
+        list.innerHTML = '<div style="color:var(--t-400);text-align:center;padding:40px;font-size:0.85rem;">Soru bulunamadı.</div>';
+        return;
+    }
+
+    filtered.forEach((q, idx) => {
+        const hasDone  = !!_visualsMap[q.id];
+        const existingB64 = hasDone ? _visualsMap[q.id].base64 : null;
+
+        const card = document.createElement('div');
+        card.className = 'q-card' + (hasDone ? ' has-visual' : '');
+        card.dataset.id = q.id;
+
+        card.innerHTML = `
+            <div class="q-card-header" onclick="_toggleCard('${q.id}')">
+                <div class="q-num">${idx + 1}</div>
+                <div class="q-content">
+                    <div class="q-topic">${q.topicTitle}</div>
+                    <div class="q-text">${q.q.replace(/\n/g, ' ')}</div>
+                </div>
+                <div class="q-badge ${hasDone ? 'done' : 'pending'}">${hasDone ? '✓ Yüklendi' : '⏳ Bekliyor'}</div>
+            </div>
+            <div class="q-upload-area" id="upload-${q.id}">
+                <div class="q-desc-hint">🗺️ ${q.visual.desc || 'Görsel açıklaması yok'}</div>
+                <div class="preview-wrap ${hasDone ? 'show' : ''}" id="preview-wrap-${q.id}">
+                    ${hasDone ? `<img src="${existingB64}" alt="görsel" id="preview-img-${q.id}">` : `<img id="preview-img-${q.id}">`}
+                </div>
+                <div class="drop-zone" id="drop-${q.id}">
+                    <div class="drop-icon">📁</div>
+                    <div>Görseli buraya sürükle veya tıkla</div>
+                    <div style="font-size:0.68rem;margin-top:4px;color:var(--t-400)">PNG, JPG — Max 800KB</div>
+                    <input type="file" id="file-${q.id}" accept="image/png,image/jpeg,image/webp">
+                </div>
+                <div class="upload-actions">
+                    <button class="btn-upload" id="btn-save-${q.id}" disabled onclick="_saveVisualForQ('${q.id}')">
+                        ↑ Kaydet
+                    </button>
+                    <button class="btn-remove ${hasDone ? '' : ''}" id="btn-del-${q.id}" 
+                        style="${hasDone ? '' : 'display:none'}"
+                        onclick="_deleteVisualForQ('${q.id}')">🗑 Sil</button>
+                </div>
+                <div class="upload-status" id="status-${q.id}">
+                    ${hasDone ? '<span class="status-ok">✓ Görsel mevcut — ' + (_visualsMap[q.id].uploadedAt || '').slice(0,10) + '</span>' : ''}
+                </div>
+            </div>
+        `;
+        list.appendChild(card);
+
+        // Drag & drop ve file input
+        _bindDropZone(q.id);
+    });
+}
+
+window._toggleCard = function(qId) {
+    const area = document.getElementById('upload-' + qId);
+    if (!area) return;
+    area.classList.toggle('open');
+};
+
+function _bindDropZone(qId) {
+    const zone  = document.getElementById('drop-' + qId);
+    const input = document.getElementById('file-' + qId);
+    if (!zone || !input) return;
+
+    zone.addEventListener('click', () => input.click());
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file) _processFile(qId, file);
+    });
+    input.addEventListener('change', () => {
+        if (input.files[0]) _processFile(qId, input.files[0]);
+    });
+}
+
+// pending base64 map (henüz kaydedilmemiş)
+const _pendingB64 = {};
+
+function _processFile(qId, file) {
+    const statusEl = document.getElementById('status-' + qId);
+    const saveBtn  = document.getElementById('btn-save-' + qId);
+
+    // Boyut kontrolü — 800KB
+    if (file.size > 800 * 1024) {
+        statusEl.innerHTML = '<span class="status-err">✗ Dosya çok büyük (max 800KB). Görseli sıkıştırın.</span>';
+        return;
+    }
+
+    statusEl.innerHTML = '<span class="status-loading">Okunuyor...</span>';
+
+    const reader = new FileReader();
+    reader.onload = e => {
+        const b64 = e.target.result;
+        _pendingB64[qId] = b64;
+
+        // Preview göster
+        const previewWrap = document.getElementById('preview-wrap-' + qId);
+        const previewImg  = document.getElementById('preview-img-' + qId);
+        if (previewImg)  previewImg.src = b64;
+        if (previewWrap) previewWrap.classList.add('show');
+
+        saveBtn.disabled = false;
+        statusEl.innerHTML = '<span class="status-loading">Hazır — kaydetmek için ↑ Kaydet\'e tıklayın.</span>';
+    };
+    reader.onerror = () => {
+        statusEl.innerHTML = '<span class="status-err">✗ Dosya okunamadı.</span>';
+    };
+    reader.readAsDataURL(file);
+}
+
+window._saveVisualForQ = async function(qId) {
+    const b64       = _pendingB64[qId];
+    const statusEl  = document.getElementById('status-' + qId);
+    const saveBtn   = document.getElementById('btn-save-' + qId);
+    const delBtn    = document.getElementById('btn-del-' + qId);
+    const badge     = document.querySelector(`.q-card[data-id="${qId}"] .q-badge`);
+    const card      = document.querySelector(`.q-card[data-id="${qId}"]`);
+
+    if (!b64) { statusEl.innerHTML = '<span class="status-err">Önce bir görsel seçin.</span>'; return; }
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = '⏳ Kaydediliyor...';
+    statusEl.innerHTML = '<span class="status-loading">Firestore\'a yazılıyor...</span>';
+
+    try {
+        await _saveVisual(qId, b64, _currentUser.email);
+        _visualsMap[qId] = { base64: b64, uploadedAt: new Date().toISOString() };
+        delete _pendingB64[qId];
+
+        // UI güncelle
+        statusEl.innerHTML = '<span class="status-ok">✓ Kaydedildi!</span>';
+        saveBtn.textContent = '↑ Kaydet';
+        if (badge)  { badge.className = 'q-badge done'; badge.textContent = '✓ Yüklendi'; }
+        if (card)   card.classList.add('has-visual');
+        if (delBtn) delBtn.style.display = '';
+
+        _updateStats();
+        _toast('✓ Görsel kaydedildi!');
+    } catch(err) {
+        statusEl.innerHTML = '<span class="status-err">✗ Hata: ' + err.message + '</span>';
+        saveBtn.disabled = false;
+        saveBtn.textContent = '↑ Kaydet';
+    }
+};
+
+window._deleteVisualForQ = async function(qId) {
+    if (!confirm('Bu görseli silmek istediğinize emin misiniz?')) return;
+
+    const statusEl = document.getElementById('status-' + qId);
+    const delBtn   = document.getElementById('btn-del-' + qId);
+    const badge    = document.querySelector(`.q-card[data-id="${qId}"] .q-badge`);
+    const card     = document.querySelector(`.q-card[data-id="${qId}"]`);
+    const preview  = document.getElementById('preview-wrap-' + qId);
+
+    statusEl.innerHTML = '<span class="status-loading">Siliniyor...</span>';
+
+    try {
+        await _deleteVisual(qId);
+        delete _visualsMap[qId];
+
+        if (badge)   { badge.className = 'q-badge pending'; badge.textContent = '⏳ Bekliyor'; }
+        if (card)    card.classList.remove('has-visual');
+        if (delBtn)  delBtn.style.display = 'none';
+        if (preview) preview.classList.remove('show');
+        statusEl.innerHTML = '';
+
+        _updateStats();
+        _toast('🗑 Görsel silindi.');
+    } catch(err) {
+        statusEl.innerHTML = '<span class="status-err">✗ Hata: ' + err.message + '</span>';
+    }
+};
+
+// ─────────────────────────────────────────────────────────────
+// Filter butonları
+// ─────────────────────────────────────────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        _currentFilter = btn.dataset.filter;
+        _renderList();
+    });
+});
+
+// ─────────────────────────────────────────────────────────────
+// Auth
+// ─────────────────────────────────────────────────────────────
+document.getElementById('btn-google-login').addEventListener('click', async () => {
+    try {
+        await signInWithPopup(auth, gp);
+    } catch(e) {
+        const el = document.getElementById('auth-error');
+        el.textContent = 'Giriş hatası: ' + e.message;
+        el.style.display = 'block';
+    }
+});
+
+document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+
+onAuthStateChanged(auth, async user => {
+    const authScreen = document.getElementById('auth-screen');
+    const appEl      = document.getElementById('app');
+
+    if (!user) {
+        authScreen.style.display = 'flex';
+        appEl.style.display      = 'none';
+        return;
+    }
+
+    // Yetki kontrolü
+    if (ALLOWED_EMAILS.length > 0 && !ALLOWED_EMAILS.includes(user.email)) {
+        await signOut(auth);
+        const errEl = document.getElementById('auth-error');
+        errEl.textContent = 'Bu hesabın erişim yetkisi yok: ' + user.email;
+        errEl.style.display = 'block';
+        return;
+    }
+
+    _currentUser = user;
+    authScreen.style.display = 'none';
+    appEl.style.display      = 'block';
+    document.getElementById('user-name').textContent = user.displayName || user.email;
+
+    // Uygulama yüklenene kadar bekle (appData için)
+    document.getElementById('loading').style.display  = 'flex';
+    document.getElementById('questions-list').style.display = 'none';
+
+    // appData'yı bekle
+    const _waitForAppData = () => new Promise(resolve => {
+        if (window.appData) { resolve(); return; }
+        const interval = setInterval(() => {
+            if (window.appData) { clearInterval(interval); resolve(); }
+        }, 100);
+        setTimeout(() => { clearInterval(interval); resolve(); }, 5000);
+    });
+    await _waitForAppData();
+
+    // Soruları topla
+    _allQuestions = _collectVisualQuestions();
+
+    // Mevcut görselleri Firestore'dan çek
+    try {
+        _visualsMap = await _loadAllVisuals();
+    } catch(e) {
+        console.warn('Firestore okuma hatası:', e);
+        _visualsMap = {};
+    }
+
+    document.getElementById('loading').style.display        = 'none';
+    document.getElementById('questions-list').style.display = 'flex';
+
+    _updateStats();
+    _renderList();
+});
+</script>
+
+<!-- data.js'yi yükle (appData için) -->
+<script src="data.js"></script>
+
+</body>
+</html>

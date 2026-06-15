@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0d0d0f" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f5f4f0" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" id="meta-theme-color" content="#0d0d0f">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="KPSS Atlas">
+    <title>KPSS Atlas — Dijital Çalışma Platformu</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400;1,700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<!-- Service Worker kaydı -->
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js').then(reg => {
+                console.log('[SW] Kayıtlı:', reg.scope);
+
+                // Yeni versiyon gelince kullanıcıya bildir
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // Mevcut toast sisteminle göster
+                            if (typeof showToast === 'function') {
+                                showToast('🔄 Yeni versiyon hazır — sayfayı yenileyin', 'info', 6000);
+                            }
+                        }
+                    });
+                });
+            }).catch(err => console.warn('[SW] Kayıt hatası:', err));
+        });
+    }
+</script>
+
+<body>
+
+    <!-- ── SIDEBAR ────────────────────────────────────────────── -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-mark">
+                <span class="logo-k">K</span>
+            </div>
+            <div class="logo-text">
+                <span class="logo-title">KPSS</span>
+                <span class="logo-sub">DİJİTAL ATLAS</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-label">MENÜ</div>
+            <button class="nav-item nav-item-active" id="nav-home">
+                <span class="nav-icon">◈</span>
+                <span>Ana Sayfa</span>
+            </button>
+            <button class="nav-item" id="nav-stats" onclick="showStatsModal()">
+                <span class="nav-icon">◎</span>
+                <span>İstatistikler</span>
+            </button>
+            <button class="nav-item" id="nav-settings" onclick="showSettingsModal()">
+                <span class="nav-icon">⚙</span>
+                <span>Ayarlar</span>
+            </button>
+        </nav>
+
+        <div class="sidebar-profile">
+            <!-- Tek header-badge ID burada — JS bunu bulur, mobil mirror CSS ile senkronize edilir -->
+            <div id="header-badge" class="sidebar-badge"></div>
+        </div>
+    </aside>
+
+    <!-- ── MOBILE TOP BAR ─────────────────────────────────────── -->
+    <header class="mobile-header">
+        <div class="mh-left">
+            <div class="mh-brand">
+                <span class="mh-logo">K<em>.</em></span>
+                <span class="mh-sub">ATLAS</span>
+            </div>
+        </div>
+        <div class="mh-right">
+            <!-- Mobilde profil: JS'nin inject ettiği #header-badge görünür hale getirilir.
+                 Aynı zamanda mobil header için ayrı bir tıklanabilir alan -->
+            <button class="mh-icon-btn" id="mh-theme-btn" onclick="toggleTheme()" title="Tema Değiştir">
+                <span id="mh-theme-icon">🌙</span>
+            </button>
+            <button class="mh-icon-btn" id="mh-settings-btn" onclick="showSettingsModal()" title="Ayarlar">
+                <span>⚙</span>
+            </button>
+            <button class="mh-profile-btn" id="mh-profile-btn" onclick="showStatsModal()" style="display:none;">
+                <span class="mh-avatar" id="mh-avatar">👤</span>
+                <span class="mh-profile-name" id="mh-profile-name">Profil</span>
+            </button>
+            <button class="mh-login-btn" id="mh-login-btn" onclick="showProfileModal()">
+                <span>Giriş Yap</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ── MAIN CONTENT ───────────────────────────────────────── -->
+    <main class="main-content">
+
+        <!-- Topbar: geri butonu + başlık -->
+        <div class="topbar">
+            <button id="back-btn" onclick="goBack()">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+                Geri Dön
+            </button>
+            <h2 id="current-title">Dersler</h2>
+        </div>
+
+        <!-- İçerik -->
+        <div class="container">
+            <div id="menu-area" class="grid-menu"></div>
+
+            <!-- Karıştırma overlay -->
+            <div id="shuffle-overlay" style="display: none;">
+                <div class="shuffle-content">
+                    <div id="dynamic-shuffle-icon" class="shuffle-icon">⳽</div>
+                    <p class="shuffle-label">Sorular Hazırlanıyor</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="shuffle-progress-fill"></div>
+                    </div>
+                    <p id="shuffle-count-label" class="shuffle-count"></p>
+                </div>
+            </div>
+
+            <!-- Harita oyun alanı -->
+            <div id="game-area" style="display: none;">
+                <div id="map"></div>
+                <div id="status-bar">
+                    <span>Doğru: <b id="score-correct">0</b></span>
+                    <span>Yanlış: <b id="score-wrong">0</b></span>
+                    <span>Gösterildi: <b id="score-shown">0</b></span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ── SORU MODALİ ────────────────────────────────────────── -->
+    <div id="modal-overlay"></div>
+    <div id="question-modal">
+        <div id="modal-progress-bar">
+            <div id="modal-progress-fill"></div>
+        </div>
+
+        <div id="topic-label"></div>
+        <div id="quiz-progress" style="display:none;"></div>
+
+        <h3 id="q-title">Soru</h3>
+        <input type="text" id="user-answer" placeholder="Cevabı yazın..." autocomplete="off" autocorrect="off"
+            autocapitalize="off" spellcheck="false">
+        <div id="mc-area" style="display:none;"></div>
+
+        <div id="hint-area" style="display:none;">
+            <button id="btn-hint" onclick="useHint()">
+                <span class="hint-icon">💡</span>
+                <span class="hint-text-label">İpucu Kullan</span>
+                <span id="hint-token-badge">3</span>
+            </button>
+        </div>
+
+        <button class="btn-check" onclick="checkAnswer()">KONTROL ET</button>
+
+        <div class="btn-row-secondary">
+            <button id="btn-prev-question" style="display:none;" class="btn-secondary btn-prev">◀ Önceki</button>
+            <button class="btn-secondary btn-giveup" onclick="showAnswer()">Cevabı Göster</button>
+            <button id="btn-finish" onclick="finishQuiz()" class="btn-secondary btn-finish" style="display:none;">✓
+                Bitir</button>
+            <button class="btn-secondary btn-close" onclick="closeModal()">İptal</button>
+        </div>
+
+        <p id="feedback"></p>
+    </div>
+
+    <!-- ── FIREBASE ───────────────────────────────────────────── -->
+    <!-- Firebase script bloğunun içine, initializeApp'ten SONRA ekle -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+            from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc }
+            from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB8vAXBIg1VNRKWFezzkpeA9F3dWvK0E5M",
+            authDomain: "kpss-atlas.firebaseapp.com",
+            projectId: "kpss-atlas",
+            storageBucket: "kpss-atlas.firebasestorage.app",
+            messagingSenderId: "67077582975",
+            appId: "1:67077582975:web:2ef63b57347b193f12cf4a"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Geliştirme / production ayrımı
+        if (location.hostname !== 'localhost') {
+            // Buraya ileride App Check eklenebilir
+            console.log('[KPSS] Production modu');
+        }
+
+        window._fb = {
+            auth, db, GoogleAuthProvider, signInWithPopup, signOut,
+            onAuthStateChanged, doc, getDoc, setDoc, updateDoc, deleteDoc
+        };
+        window._fbReady = true;
+        window.dispatchEvent(new Event('fb-ready'));
+    </script>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+
+    <!-- ─────────────────────────────────────────────────────────
+         MOBİL PROFİL SYNC
+         script.js'deki setActiveProfile() → #header-badge'i günceller
+         MutationObserver bunu yakalar ve mobil header'ı senkronize eder.
+         Ayrıca: renderTopicSelection inject edilince .grid-menu'ya
+         has-selection class ekler (:has() desteği olmayan tarayıcılar için)
+    ───────────────────────────────────────────────────────── -->
+    <script>
+        (function () {
+            /* ── 1. Mobil profil sync ── */
+            var badge = document.getElementById('header-badge');
+            var profileBtn = document.getElementById('mh-profile-btn');
+            var loginBtn = document.getElementById('mh-login-btn');
+            var avatarEl = document.getElementById('mh-avatar');
+            var nameEl = document.getElementById('mh-profile-name');
+
+            function syncMobileHeader() {
+                if (!badge) return;
+                var avatarSpan = badge.querySelector('.badge-avatar');
+                var nameSpan = badge.querySelector('.badge-name');
+                /* badge inject edilmiş ve display:none değilse profil var demektir */
+                var hasProfile = avatarSpan && nameSpan &&
+                    badge.style.display !== 'none' &&
+                    badge.style.display !== '';
+
+                if (hasProfile) {
+                    var avatarText = avatarSpan.textContent || '👤';
+                    var nameText = nameSpan.textContent || 'Profil';
+                    if (avatarEl) avatarEl.textContent = avatarText;
+                    if (nameEl) nameEl.textContent = nameText;
+                    if (profileBtn) profileBtn.style.display = 'flex';
+                    if (loginBtn) loginBtn.style.display = 'none';
+                } else {
+                    if (profileBtn) profileBtn.style.display = 'none';
+                    /* Firebase hazır olduktan sonra göster — flash önlenir */
+                    if (loginBtn) loginBtn.style.display = 'flex';
+                }
+            }
+
+            /* Firebase async — ilk sync badge inject edilince gerçekleşir.
+               Ama kullanıcı misafirken de login butonunu göstermeliyiz.
+               Kısa timeout ile Firebase'in kontrol etmesine fırsat ver. */
+            setTimeout(syncMobileHeader, 800);
+
+            /* DOM değişimlerini dinle (Firebase async) */
+            if (badge) {
+                var observer = new MutationObserver(syncMobileHeader);
+                observer.observe(badge, {
+                    childList: true, subtree: true,
+                    attributes: true, attributeFilter: ['style', 'class']
+                });
+            }
+
+            /* ── 2. menu-area grid→block geçişi (:has() fallback) ── */
+            var menuArea = document.getElementById('menu-area');
+            if (menuArea) {
+                var menuObserver = new MutationObserver(function () {
+                    var hasSelection = !!menuArea.querySelector('.selection-container');
+                    menuArea.classList.toggle('has-selection', hasSelection);
+                });
+                menuObserver.observe(menuArea, { childList: true, subtree: false });
+            }
+        })();
+    </script>
+</body>
+
+</html>     
