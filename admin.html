@@ -433,17 +433,12 @@
 
 <div id="admin-toast"></div>
 
-<!-- data.js ÖNCE yüklenmeli — module script asenkron çalıştığı için -->
+<!-- ── Firebase compat (module olmadan, data.js ile uyumlu) ── -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="data.js"></script>
-
-<!-- ── Firebase ── -->
-<script type="module">
-import { initializeApp }          from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
-    from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs }
-    from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-
+<script>
 const firebaseConfig = {
     apiKey:            "AIzaSyB8vAXBIg1VNRKWFezzkpeA9F3dWvK0E5M",
     authDomain:        "kpss-atlas.firebaseapp.com",
@@ -453,10 +448,10 @@ const firebaseConfig = {
     appId:             "1:67077582975:web:2ef63b57347b193f12cf4a"
 };
 
-const app  = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
-const gp   = new GoogleAuthProvider();
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+const gp   = new firebase.auth.GoogleAuthProvider();
 
 // ── Yetkili e-postalar — buraya kendi Google hesabını ekle ──
 const ALLOWED_EMAILS = [
@@ -498,14 +493,14 @@ function _collectVisualQuestions() {
 // Collection: question_visuals / {questionId} / { base64, uploadedAt, uploadedBy }
 // ─────────────────────────────────────────────────────────────
 async function _loadAllVisuals() {
-    const snap = await getDocs(collection(db, 'question_visuals'));
+    const snap = await db.collection('question_visuals').get();
     const map  = {};
     snap.forEach(d => { map[d.id] = d.data(); });
     return map;
 }
 
 async function _saveVisual(questionId, base64, userEmail) {
-    await setDoc(doc(db, 'question_visuals', questionId), {
+    await db.collection('question_visuals').doc(questionId).set({
         base64,
         uploadedAt: new Date().toISOString(),
         uploadedBy: userEmail,
@@ -513,7 +508,7 @@ async function _saveVisual(questionId, base64, userEmail) {
 }
 
 async function _deleteVisual(questionId) {
-    await deleteDoc(doc(db, 'question_visuals', questionId));
+    await db.collection('question_visuals').doc(questionId).delete();
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -743,7 +738,7 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 // ─────────────────────────────────────────────────────────────
 document.getElementById('btn-google-login').addEventListener('click', async () => {
     try {
-        await signInWithPopup(auth, gp);
+        await auth.signInWithPopup(gp);
     } catch(e) {
         const el = document.getElementById('auth-error');
         el.textContent = 'Giriş hatası: ' + e.message;
@@ -751,9 +746,9 @@ document.getElementById('btn-google-login').addEventListener('click', async () =
     }
 });
 
-document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+document.getElementById('btn-logout').addEventListener('click', () => auth.signOut());
 
-onAuthStateChanged(auth, async user => {
+auth.onAuthStateChanged(async user => {
     const authScreen = document.getElementById('auth-screen');
     const appEl      = document.getElementById('app');
 
@@ -765,7 +760,7 @@ onAuthStateChanged(auth, async user => {
 
     // Yetki kontrolü
     if (ALLOWED_EMAILS.length > 0 && !ALLOWED_EMAILS.includes(user.email)) {
-        await signOut(auth);
+        await auth.signOut();
         const errEl = document.getElementById('auth-error');
         errEl.textContent = 'Bu hesabın erişim yetkisi yok: ' + user.email;
         errEl.style.display = 'block';
@@ -781,29 +776,7 @@ onAuthStateChanged(auth, async user => {
     document.getElementById('loading').style.display  = 'flex';
     document.getElementById('questions-list').style.display = 'none';
 
-    // data.js zaten <script src="data.js"> ile yüklendi, hazır olana kadar bekle
-    const _waitForAppData = () => new Promise((resolve, reject) => {
-        if (window.appData && window.appData.quizData) { resolve(); return; }
-        let tries = 0;
-        const interval = setInterval(() => {
-            tries++;
-            if (window.appData && window.appData.quizData) {
-                clearInterval(interval);
-                resolve();
-            } else if (tries > 300) { // 30 saniye
-                clearInterval(interval);
-                reject(new Error('data.js 30 saniyede yüklenemedi — sayfayı yenileyin'));
-            }
-        }, 100);
-    });
-    try {
-        await _waitForAppData();
-    } catch(e) {
-        console.error('[Admin]', e.message);
-        document.getElementById('loading').innerHTML =
-            '<div style="color:#e74c3c;padding:20px;">⚠️ ' + e.message + '<br><br><button onclick="location.reload()" style="margin-top:10px;padding:8px 16px;cursor:pointer;">Yenile</button></div>';
-        return;
-    }
+    // data.js üstte senkron yüklendi — appData direkt hazır
 
     // Soruları topla
     _allQuestions = _collectVisualQuestions();
