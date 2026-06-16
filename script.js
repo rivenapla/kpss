@@ -1172,7 +1172,7 @@ function renderMenu(items) {
 
 function handleSelection(item) {
     // Konu seçim ekranı gösterilecek dersler
-    const topicSelectionDersler = ["tarih", "vatandaslik"];
+    const topicSelectionDersler = ["tarih", "vatandaslik", "cografya_test"];
 
     if (item.id === "turkce") {
         renderMenu(appData.turkce);
@@ -3239,7 +3239,7 @@ function openQuestion(item, markerObject = null) {
 
     const qTitle = document.getElementById('q-title');
     if (item.q) {
-        qTitle.innerText = item.q;
+        qTitle.innerHTML = _formatQuestionHTML(item.q);
     } else {
         qTitle.innerText = (item.label || "?") + " numaralı yer neresidir?";
     }
@@ -3630,7 +3630,7 @@ function showHistoryQuestion(idx) {
         }
     }
 
-    document.getElementById('q-title').innerText = record.item.q || "Soru";
+    document.getElementById('q-title').innerHTML = record.item.q ? _formatQuestionHTML(record.item.q) : 'Soru';
 
     const input = document.getElementById('user-answer');
     const feedback = document.getElementById('feedback');
@@ -3760,6 +3760,69 @@ function _getCorrectAnswers(item) {
     // Eski format: a[]
     if (item.a && item.a.length) return item.a;
     return [];
+}
+
+// ============================================================
+// SORU METNİ FORMATLAYICI
+// \n ile ayrılmış öncüllü soruları HTML'e çevirir.
+// Soru kökü: kalın (font-weight:700)
+// I. II. III. IV. ile başlayan öncüller: ince font, alt alta
+// ============================================================
+function _formatQuestionHTML(text) {
+    if (!text) return '';
+
+    // XSS önlemi: ham metni önce güvenli hale getir
+    function escHtml(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // \n ile satırlara böl
+    const lines = text.split(/\n/);
+
+    // Romen rakamı ile başlayan satırları tespit et (I. II. III. IV. V. gibi)
+    const romanRe = /^(I{1,3}|IV|V|VI{0,3}|IX|X)\./;
+
+    let result = '';
+    let inPremises = false; // öncül listesinin içindeyiz mi
+
+    lines.forEach((line, idx) => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+            // Boş satır: öncüller ile kök arasında ayraç
+            if (inPremises) {
+                result += '</ul>';
+                inPremises = false;
+            }
+            result += '<br>';
+            return;
+        }
+
+        if (romanRe.test(trimmed)) {
+            // Öncül satırı
+            if (!inPremises) {
+                result += '<ul class="q-premises">';
+                inPremises = true;
+            }
+            result += `<li class="q-premise">${escHtml(trimmed)}</li>`;
+        } else {
+            // Soru kökü veya alt bilgi satırı
+            if (inPremises) {
+                result += '</ul>';
+                inPremises = false;
+            }
+            // İlk satır → kalın soru kökü
+            const isFirstLine = idx === 0 || !result.includes('<span');
+            if (idx === 0) {
+                result += `<span class="q-stem">${escHtml(trimmed)}</span>`;
+            } else {
+                result += `<span class="q-subtext">${escHtml(trimmed)}</span>`;
+            }
+        }
+    });
+
+    if (inPremises) result += '</ul>';
+
+    return result;
 }
 
 // ============================================================
