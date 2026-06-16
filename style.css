@@ -9027,3 +9027,48 @@ body.theme-light .match-panel-header {
     }
     .bh-konu-lbl { width: 80px; }
 }
+/* ── Öncüllü Soru Formatı ────────────────────────────────── */
+#q-title {
+    /* Soru başlığının genel container'ı — birden fazla satır içerebilir */
+    display: block;
+}
+
+#q-title .q-stem {
+    /* Soru kökü: kalın */
+    display: block;
+    font-weight: 700;
+    font-size: inherit;
+    line-height: 1.5;
+    margin-bottom: 4px;
+}
+
+#q-title .q-subtext {
+    /* Soru altı metin (açıklama, "Yukarıdakilerden..." gibi) */
+    display: block;
+    font-weight: 400;
+    font-size: 0.9em;
+    color: var(--t-300, var(--ink-500));
+    margin-top: 6px;
+    line-height: 1.5;
+}
+
+#q-title .q-premises {
+    /* Öncüller listesi */
+    list-style: none;
+    margin: 8px 0 4px 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+#q-title .q-premise {
+    /* Tek bir öncül (I. II. III. ...) */
+    font-weight: 300;
+    font-size: 0.88em;
+    color: var(--t-300, var(--ink-600));
+    line-height: 1.55;
+    padding-left: 2px;
+    border-left: 2px solid var(--gold-line, rgba(180,140,60,0.25));
+    padding-left: 8px;
+}
